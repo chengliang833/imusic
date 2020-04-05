@@ -1,12 +1,17 @@
 package cn.yujian95.imusic.util;
 
-import cn.yujian95.imusic.model.Music;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.mp3.MP3AudioHeader;
 import org.jaudiotagger.audio.mp3.MP3File;
-import org.jaudiotagger.tag.id3.ID3v23Frame;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.id3.AbstractID3v2Frame;
 
-import java.io.File;
+import cn.yujian95.imusic.model.Music;
 
 /**
  * @file: MusicUtil
@@ -30,13 +35,16 @@ class MusicUtil {
      * @throws Exception 可能抛出空指针异常
      */
     static Music getMusicInfo(String filePath) throws Exception {
+    	return getMusicInfo(new File(filePath));
+    }
+    static Music getMusicInfo(File file) throws Exception {
 
         Music music = null;
 
         try {
 
-            MP3File mp3File = (MP3File) AudioFileIO.read(new File(filePath));
-
+            MP3File mp3File = (MP3File) AudioFileIO.read(file);
+            
             MP3AudioHeader audioHeader = (MP3AudioHeader) mp3File.getAudioHeader();
 
             // 歌曲名称
@@ -47,9 +55,11 @@ class MusicUtil {
             String album = getInfoFromFrameMap(mp3File, ALBUM_KEY);
             // 播放时长
             int duration = audioHeader.getTrackLength();
+            //精确音轨播放时长
+            double preciseTrackLength = audioHeader.getPreciseTrackLength();
 
             // 封装到music对象
-            music = new Music(songName, artist, album, duration, filePath);
+            music = new Music(songName, artist, album, duration, preciseTrackLength, file.getPath());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,7 +68,13 @@ class MusicUtil {
 
         return music;
     }
-
+    
+    static Map<String, FieldKey> fk = new HashMap<String, FieldKey>(){{
+    	put(SONG_NAME_KEY, FieldKey.TITLE);
+    	put(ARTIST_KEY, FieldKey.ARTIST);
+    	put(ALBUM_KEY, FieldKey.ALBUM);
+    }};
+    
     /**
      * 通过键值,获取歌曲中对应的字段信息
      *
@@ -68,7 +84,30 @@ class MusicUtil {
      * @throws Exception 可能抛出空指针异常
      */
     private static String getInfoFromFrameMap(MP3File mp3File, String key) throws Exception {
-        ID3v23Frame frame = (ID3v23Frame) mp3File.getID3v2Tag().frameMap.get(key);
-        return frame.getContent();
+    	String r = getFromV2(mp3File, key);
+    	if(StringUtils.isBlank(r)){
+    		r = getFromV1(mp3File, fk.get(key));
+    	}
+    	return r;
     }
+	private static String getFromV2(MP3File mp3File, String key) throws Exception {
+    	if(mp3File.getID3v2Tag() == null){
+    		return null;
+    	}
+    	Map map =  mp3File.getID3v2Tag().frameMap;
+    	if(map == null){
+    		return null;
+    	}
+    	AbstractID3v2Frame frame = (AbstractID3v2Frame)map.get(key);
+        return frame == null ? null :frame.getContent();
+    }
+    
+    private static String getFromV1(MP3File mp3File, FieldKey key){
+    	if(mp3File.getID3v1Tag() == null){
+    		return null;
+    	}
+    	String str = mp3File.getID3v1Tag().getFirst(key);
+    	return StringUtils.isBlank(str)?null:str;
+    }
+    
 }

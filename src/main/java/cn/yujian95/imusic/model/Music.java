@@ -35,6 +35,10 @@ public class Music implements Serializable {
      */
     private int duration;
     /**
+     * 音轨精确时长
+     */
+    private double preciseTrackLength;
+    /**
      * 音乐文件存放路径
      */
     private String path;
@@ -42,26 +46,30 @@ public class Music implements Serializable {
     public Music() {
 
     }
+    
+    public Music(String name, String singer, String album, int duration, double preciseTrackLength, String path) {
+		super();
+		this.name = name;
+		this.singer = singer;
+		this.album = album;
+		this.duration = duration;
+		this.preciseTrackLength = preciseTrackLength;
+		this.path = path;
+	}
 
-    public Music(String name, String singer, String album, int duration, String path) {
-        this.name = name;
-        this.singer = singer;
-        this.album = album;
-        this.duration = duration;
-        this.path = path;
-    }
+	public Music(int id, String name, String singer, String album, int duration, double preciseTrackLength,
+			String path) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.singer = singer;
+		this.album = album;
+		this.duration = duration;
+		this.preciseTrackLength = preciseTrackLength;
+		this.path = path;
+	}
 
-    public Music(int id, String name, String singer, String album, int duration, String path) {
-
-        this.id = id;
-        this.name = name;
-        this.singer = singer;
-        this.album = album;
-        this.duration = duration;
-        this.path = path;
-    }
-
-    public int getId() {
+	public int getId() {
         return id;
     }
 
@@ -109,9 +117,14 @@ public class Music implements Serializable {
         this.path = path;
     }
 
+    public double getPreciseTrackLength() {
+		return preciseTrackLength;
+	}
+	public void setPreciseTrackLength(double preciseTrackLength) {
+		this.preciseTrackLength = preciseTrackLength;
+	}
 
-
-    @Override
+	@Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
